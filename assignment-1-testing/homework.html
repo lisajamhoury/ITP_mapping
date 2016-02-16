@@ -1,0 +1,42 @@
+<!--  The most basic web map. -->
+
+<!DOCTYPE html>
+<!-- Leaflet Guide: http://leafletjs.com/examples/quick-start.html -->
+
+<html lang="en">
+<head>
+
+	<style type="text/css">
+		body { margin:0; padding: 0; height: 100%}
+
+		/*makes the map full width */
+		html, #map { position:absolute; top:0; bottom:0; width:100%;}
+
+	</style>
+
+	<title> Homework </title>
+
+	<!-- Leaflet -->
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+	<script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+	
+</head>
+
+<body>
+	<div id="map"></div>
+	
+	<script>
+
+	// replace "toner" here with "terrain" or "watercolor"
+	var layer = new L.StamenTileLayer("toner");
+	var map = new L.Map("map", {
+	    center: new L.LatLng(-25.9, 32.6),
+	    zoom: 11
+	});
+	map.addLayer(layer);
+	
+	</script>
+	Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.
+</body>
+</html>

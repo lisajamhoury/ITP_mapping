@@ -1,0 +1,348 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>maps.stamen.com / burningmap</title>
+        <meta charset="utf-8">
+        <meta name="description" content="The streets are on fire!">
+        <base href="http://maps.stamen.com/burningmap/"></base>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+        <script src="libraries/p5.js" type="text/javascript"></script>
+        <script type="text/javascript" src="js/vendor/modestmaps.min.js"></script>
+        <script type="text/javascript" src="js/common.js"></script>
+        <script type="text/javascript" src="js/vendor/d3.v2.min.js"></script>
+        <script type="application/javascript" src="js/gl-boilerplate.js"></script>
+        <script type="text/javascript" src="js/image-queue.js"></script>
+        <script src="libraries/mapbox-sdk.js" type="text/javascript"></script>
+        <script src="libraries/geopoint.js" type="text/javascript"></script>
+         <script src="libraries/p5.dom.js" type="text/javascript"></script>
+
+    
+
+
+        <script type="text/javascript">
+            var mbAPIKey = 'pk.eyJ1IjoibGlzYWphbWhvdXJ5IiwiYSI6ImNpZzV4NHgzcTRrdHp0d2x2cHRvdjVhY3gifQ.ftTsm2W5PxBCE83mpl0w6Q';
+
+            var latestDate = new Date();
+            console.log(latestDate);
+
+
+            var nytUrl;
+            var dataNYT = [];
+            var articles = [];
+
+            var spot=0;
+
+            nytUrl = "http://api.nytimes.com/svc/search/v2/articlesearch.json?begin_date=20160201&q=climate%20change&api-key=7529741aeac9f569a89ea4d59541862f:19:73259378";
+
+            loadJSON(nytUrl, gotData);
+
+            function gotData(data) {
+              dataNYT = data.response;
+              docs = dataNYT.docs;
+              // console.log(docs.length);
+              for (i = 0; i < docs.length; i++) {
+                
+                var tempArticle = docs[i];
+                var art = new Article(tempArticle.keywords);
+                // console.log(art.keywords.length);
+                articles[i] = art;
+              }
+              
+              for (i = 0; i < articles.length; i++) {
+                // print(articles[i]);
+                articles[i].geocode();
+              }
+            }
+
+            
+            //constructor function -- NYT article
+            function Article(tempKeywords) {
+              this.keywords = tempKeywords;
+              this.loc;
+              
+              this.getLocation = function() {
+                for (z = 0; z < this.keywords.length; z++) {
+                  if (this.keywords[z].name === "glocations") {
+                    this.loc = this.keywords[z].value;
+                    console.log(this.loc);
+                    return this.loc;
+                  } 
+                }
+              };
+              
+              this.geocode = function() {
+                var location = this.getLocation(); 
+                
+                if (!location) {
+                  return;
+                }
+                
+                var searchUrl = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + location + ".json?access_token=" + mbAPIKey + "&types=country";
+                var displayCallback = this.display.bind(this); // keeps "this" defined as the article, loadJSON was bringing in a new "this"
+                loadJSON(searchUrl, displayCallback);
+              };
+              
+              // this.display = function(data) {
+              //   if (data.features.length === 0) {
+              //     return;
+              //   } 
+
+                  
+              //     var c = random(120, 240);
+              //     fill(c,c,c, random(150,200));
+              //     noStroke();
+              //     ellipse(this.getHorizontalCoord(center), this.getVerticalCoord(center),25 ,25 );
+                  
+              //     spot++;
+              //     print(spot);
+              //     textSize(12);
+              //     // text(this.headline, 0, 100+(spot*53), 200, 50);
+              //     text(this.headline, 0, this.getVerticalCoord(center)+5, 200, 50);
+                 
+                 
+                 
+              //     // fill(255);
+              //     noStroke();
+              //     rect(0, this.getVerticalCoord(center), this.getHorizontalCoord(center), 0.5);
+                  
+              //   }
+                
+              // };
+              
+              
+              // this.getVerticalCoord = function(center) {
+              //   var verticalDifference = (currentImage.center[0] - center[0]);
+              //   var adjust = 6;
+              //   var verticalOffset = 500 + (adjust * verticalDifference);
+              //   // print(verticalOffset);
+              //   return verticalOffset;
+              // }
+              
+              // this.getHorizontalCoord = function(center) { 
+              //   var horizontalDifference = (currentImage.center[1] - center[1]);
+              //   var adjust = 3.75;
+              //   var horizontalOffset = 400 - (adjust * horizontalDifference);
+              //   // print("horizontal:");
+              //   // print(horizontalOffset);
+              //   return horizontalOffset;
+                
+                
+              // }
+  }
+
+
+
+
+
+
+
+
+        </script>
+
+        <script id="shader-vs" type="x-shader/x-vertex">
+            
+            uniform mat4 view;
+            
+            attribute vec2 pos;
+            attribute vec3 tex;
+            
+            varying vec2 vertex_coord;
+            varying vec3 texture_coord;
+    
+            void main()
+            {
+                // vec4 fills in the remaining z, w dimensions here
+                gl_Position = view * vec4(pos, 0, 1);
+                
+                vertex_coord = pos;
+                texture_coord = tex;
+            }
+            
+        </script>
+        <script id="shader-fs" type="x-shader/x-fragment">
+            
+            precision mediump float;
+            
+            uniform sampler2D sampler0;
+            uniform sampler2D sampler1;
+            uniform sampler2D sampler2;
+            uniform sampler2D sampler3;
+    
+            varying vec2 vertex_coord;
+            varying vec3 texture_coord;
+            
+            void main()
+            {
+                float r = texture_coord[0];
+                float s = texture_coord[1];
+                float t = texture_coord[2];
+            
+                if(r == 0.0) {
+                    gl_FragColor = vec4(1,1,1,1.15) - texture2D(sampler0, vec2(s, t));
+                
+                } else if(r == 1.0) {
+                    gl_FragColor = vec4(1,1,1,1.15) - texture2D(sampler1, vec2(s, t));
+                
+                } else if (r == 2.0) {
+                    gl_FragColor = vec4(1,1,1,1.15) - texture2D(sampler2, vec2(s, t));
+
+                } else {
+                    gl_FragColor = vec4(1,1,1,1.15) - texture2D(sampler3, vec2(s, t));
+                }
+            }
+            
+        </script>
+
+        <script id="shader-vs-px" type="x-shader/x-vertex">
+        
+            uniform mat4 view;
+
+            attribute float x;
+            attribute float y;
+            attribute float t;
+            
+            varying float time;
+            
+            void main()
+            {
+                if(t > 0.0)
+                {
+                    gl_Position = view * vec4(x, y, 0, 1);
+                    gl_PointSize = ((t < .5) ? (t+.5) : (1.8-t))*5.0;
+                    time = t;
+                }
+            }
+            
+        </script>
+        <script id="shader-fs-px" type="x-shader/x-fragment">
+            
+            precision mediump float;
+            
+            varying float time;
+            
+            void main()
+            {
+                gl_FragColor = vec4(1, time*.4, .1, 1);
+            }
+            
+        </script>
+        <script type="text/javascript">
+            
+        </script>
+        <style type="text/css">
+            @import url(css/bootstrap.css);
+            @import url(css/screen.css);
+            @import url(css/layer.css);
+
+            body {
+                background: black;
+            }
+
+            #map {
+                position: relative;
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+                position: absolute;
+                width: 100%;
+                top: 0;
+            }
+
+            div.tile,
+            img.tile {
+                display: block;
+                position: absolute;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                -webkit-transform-origin: 0px 0px;
+            }
+
+            #notice {
+                background-color: white;
+                width: 50%;
+                margin: 60px 25%;
+                font-size: 60px;
+                position: absolute;
+                line-height: normal;
+                text-align: center;
+            }
+
+            #notice button {
+                font-size: inherit;
+                line-height: inherit;
+                width: auto;
+                margin: 20px;
+            }
+
+            .attribution {
+                bottom: 20px;
+            }
+
+            #header {
+                background: red;
+            }
+
+            #parentDiv {
+                position: absolute !important;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="overlay">
+            <div id="controls" class="controls">
+                <a id="zoom-in" title="zoom in">+</a>
+                <a id="zoom-out" title="zoom out">&minus;</a>
+            </div>
+            <!-- <div id="feedback" class="toggle" style="display: none;">
+                <form target="_blank" method="POST" action="../feedback.php?style=toner">
+                    <input id="feedback-center" name="center" type="hidden">
+                    <p><strong>Not looking right?</strong>
+                    <a href="http://citytracking.org/some-known-bugs-and-whats-to-do/">See here for more info.</a><br>
+                    You can help us track down problems by sending us a
+                    brief description of what&rsquo;s wrong:</p>
+                    <textarea name="description"></textarea>
+                    <p><small>A link to the current view will be included automatically.</small></p>
+                    <p><label>Your email (optional): <input type="text" name="sender"></label></p>
+                    <p><input id="send-feedback" class="btn btn-success" type="submit" value="submit"></p>
+                </form>
+            </div> -->
+        </div>
+
+        <div id="map">
+            <canvas id="c"></canvas>\
+            <p class="attribution">
+                <a id="home-link" target="_top" href="http://maps.stamen.com">Map tiles</a> by <a target="_top" href="http://stamen.com">Stamen Design</a>, under <a target="_top" href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a target="_top" href="http://openstreetmap.org">OpenStreetMap</a>, under <a target="_top" href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.
+            </p>
+        </div>
+
+        <div id="notice">
+            Sorry, but this map uses bleeding edge features of WebGL<br>
+            and only works <em>well</em><br>
+            in <a href="http://google.com/chrome">Google Chrome</a>.
+            <br>
+            <button>Try it anyway!</button>
+        </div>
+
+        <script type="text/javascript" src="js/search.js" defer></script>
+        <script type="text/javascript" src="js/bg.js"></script>
+        <script type="text/javascript" src="js/thejs.js"></script>
+        <script>
+            var notice = document.getElementById("notice");
+            if (navigator.userAgent.match(/Chrome/i)) {
+                notice.style.display = "none";
+                burnBabyBurn();
+            } else {
+                notice.addEventListener("click", function() {
+                    if (confirm("Are you sure? This may crash your browser or slow your computer to the point of unusability.")) {
+                        notice.style.display = "none";
+                        burnBabyBurn();
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
+

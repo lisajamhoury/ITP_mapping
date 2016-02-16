@@ -1,0 +1,196 @@
+<!--  This is lifted almost directly from a Leaflet example: http://leafletjs.com/examples/choropleth.html -->
+
+<!-- Data from Amnesty International and Death Penalty Info. This is just a homework assignment and I didn't fact check or edit so please don't use this map as a reference -->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Global Death Penalty Status 2014</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+
+	<style>
+		body {
+		  padding:0;
+		  margin:0;
+		  height: 100%;
+		}
+		html, #map{
+		  position: absolute;
+		  top: 0;
+		  bottom: 0;
+		  width: 100%;
+		} 
+		.info {
+			padding: 6px 8px;
+			font: 14px/16px Arial, Helvetica, sans-serif;
+			background: white;
+			background: rgba(255,255,255,0.8);
+			box-shadow: 0 0 15px rgba(0,0,0,0.2);
+			border-radius: 5px;
+		}
+		.info h4 {
+			margin: 0 0 5px;
+			color: #777;
+		}
+
+		.legend {
+		    line-height: 18px;
+		    color: #555;
+		}
+		.legend i {
+		    width: 18px;
+		    height: 18px;
+		    float: left;
+		    margin-right: 8px;
+		    opacity: 0.7;
+		}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+
+	<script type="text/javascript" src="data/data.js"></script>
+	<script type="text/javascript">
+
+		var map = L.map('map').setView([27.346500, 15.401948], 2);
+
+		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'mapbox.dark'
+		}).addTo(map);
+
+
+		// control that shows state info on hover
+		var info = L.control();
+
+		info.onAdd = function (map) {
+			this._div = L.DomUtil.create('div', 'info');
+			this.update();
+			return this._div;
+		};
+
+		info.update = function (props) {
+			this._div.innerHTML = '<h4>Global Death Penalty Status (2014)</h4>' +  (props ?
+				'<b>' + props.name + '</b><br />' + getStatus(props.status) + '<br /><br />' + (props.executions > 0 ? '<b>Executions Performed</b><br/>' + props.executions + getReliability(props.unreliable) : '') : 'Hover over a state');
+		};
+
+		info.addTo(map);
+
+		//control for legend on bottom right
+		var legend = L.control({position: 'bottomright'});
+
+		legend.onAdd = function (map) {
+
+		    var div = L.DomUtil.create('div', 'info legend'),
+		        grades = [1, 0, -1, -2, -3],
+		        labels = ["Retained", "Abolished for Ordinary Crimes", "Abolished in Practice", "Abolished for All Crimes", "No Data"];
+
+		    for (var i = 0; i < grades.length; i++) {
+		        div.innerHTML +=
+		            '<i style="background:' + getColor(grades[i]) + '"></i> ' +
+		            labels[i] + '<br>';
+		    }
+
+		    return div;
+		};
+
+		legend.addTo(map);
+
+
+		//get status 
+		function getStatus(status) {
+			return status == 1 ? 'Retains death penalty for ordinary crimes' :
+			       status == 0  ? 'Abolished death penalty for ordinary crimes ' :
+			       status == -1  ? 'Abolished death penalty in practice' :
+			       status == -2  ? 'Abolished death penalty for all crimes' :
+			       status === -3   ? 'No information provided' :
+			       'No information provided';
+		}
+
+		//get reliability
+		function getReliability(reliability) {
+			return reliability == '*' ? ' *Number likely greater' : ' ';
+
+		}
+
+
+		// get color depending on population density value
+		function getColor(d) {
+			return d == 1 ? '#9F0053' :
+			       d == 0  ? '#EB4F9D' :
+			       d == -1  ? '#8ED5FA' :
+			       d == -2  ? '#5DD5FA' :
+			       d == -3   ? '#777' :
+			                  '#777';
+		}
+
+		function style(feature) {
+			return {
+				weight: 2,
+				opacity: 1,
+				color: '#ccc',
+				dashArray: '3',
+				fillOpacity: 1,
+				fillColor: getColor(feature.properties.status)
+			};
+		}
+
+		function highlightFeature(e) {
+			var layer = e.target;
+
+			layer.setStyle({
+				weight: 5,
+				color: '#666',
+				dashArray: '',
+				fillOpacity: 1
+			});
+
+			if (!L.Browser.ie && !L.Browser.opera) {
+				layer.bringToFront();
+			}
+
+			info.update(layer.feature.properties);
+		}
+
+		var geojson;
+
+		function resetHighlight(e) {
+			geojson.resetStyle(e.target);
+			info.update();
+		}
+
+		function zoomToFeature(e) {
+			map.fitBounds(e.target.getBounds());
+		}
+
+		function onEachFeature(feature, layer) {
+			layer.on({
+				mouseover: highlightFeature,
+				mouseout: resetHighlight,
+				click: zoomToFeature
+			});
+		}
+
+		geojson = L.geoJson(cpData, {
+			style: style,
+			onEachFeature: onEachFeature
+		}).addTo(map);
+
+		map.attributionControl.addAttribution('Data from <a href="http://www.amnestyusa.org/pdfs/DeathSentencesAndExecutions2014_EN.pdf" target="_blank">Amnesty International</a> and <a href="http://www.deathpenaltyinfo.org/abolitionist-and-retentionist-countries?scid=30&did=140#all%20crimes" target="_blank">Death Penalty Info</a>. Not factchecked. DO NOT CITE!');
+
+
+
+
+	</script>
+</body>
+</html>

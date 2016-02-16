@@ -1,0 +1,171 @@
+<!--  The most basic web map. -->
+
+<!DOCTYPE html>
+<!-- Leaflet Guide: http://leafletjs.com/examples/quick-start.html -->
+
+<html lang="en">
+<head>
+
+	<style type="text/css">
+		body { margin:0; padding: 0; height: 100%}
+
+		/*makes the map full width */
+		html, #map { position:absolute; top:0; bottom:0; width:100%;}
+
+	</style>
+
+	<title> Homework </title>
+
+	<!-- Leaflet -->
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+	<script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+	<script src="libraries/mapbox-sdk.js" type="text/javascript"></script>
+    <script src="libraries/geopoint.js" type="text/javascript"></script>
+    
+
+	<script type="text/javascript">
+		//listens for page load, calls init upon load
+		window.addEventListener('load', init);
+
+		var mbAPIKey = 'pk.eyJ1IjoibGlzYWphbWhvdXJ5IiwiYSI6ImNpZzV4NHgzcTRrdHp0d2x2cHRvdjVhY3gifQ.ftTsm2W5PxBCE83mpl0w6Q';
+		var nytUrl = "http://api.nytimes.com/svc/search/v2/articlesearch.json?begin_date=20160201&q=climate%20change&api-key=7529741aeac9f569a89ea4d59541862f:19:73259378";
+
+		// to hold array of nyt articles
+		var dataNYT = [];
+		var articles = [];
+
+		var artlocation;
+		var mbsearchUrl;
+		var displayCallback;
+
+		//loads nyt API with help from http://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
+		function loadJSON(callback) {
+			var xobj = new XMLHttpRequest();
+			xobj.overrideMimeType("application/json");
+			xobj.open('GET', nytUrl, true);
+			xobj.onreadystatechange = function () {
+				if (xobj.readyState == 4 && xobj.status == "200") {
+					callback(xobj.responseText);
+				}
+			};
+			xobj.send(null);
+		}
+
+
+		//loads mb API with help from http://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript	
+		function loadJSONMB(callback) {
+			var xobj = new XMLHttpRequest();
+			xobj.overrideMimeType("application/json");
+			xobj.open('GET', mbsearchUrl, true);
+			xobj.onreadystatechange = function () {
+				if (xobj.readyState == 4 && xobj.status == "200") {
+					callback(xobj.responseText);
+				}
+			};
+			xobj.send(null);
+		}
+
+		function gotData(data) {
+			dataNYT = data.response;
+			docs = dataNYT.docs;
+			for (i = 0; i < docs.length; i++) {
+			    
+			    var tempArticle = docs[i];
+			    var art = new Article(tempArticle.keywords);
+			    articles[i] = art;
+			}
+			  
+			for (i = 0; i < articles.length; i++) {
+			    articles[i].geocode();
+			}
+		}
+		
+
+
+		function Article(tempKeywords) {
+			this.keywords = tempKeywords;
+			this.loc;
+
+			this.getLocation = function() {
+			    for (z = 0; z < this.keywords.length; z++) {
+			      if (this.keywords[z].name === "glocations") {
+			        this.loc = this.keywords[z].value;
+			        return this.loc;
+			      } 
+			    }
+  			};
+
+  			this.geocode = function() {
+			    artlocation = this.getLocation(); 
+			    console.log(artlocation);
+	
+			    
+			    if (!location) {
+			      return;
+			    }
+			    
+			    mbsearchUrl = "https://api.mapbox.com/geocoding/v5/mapbox.places/" + artlocation + ".json?access_token=" + mbAPIKey + "&types=country";
+			    displayCallback = this.display.bind(this); // keeps "this" defined as the article, loadJSON was bringing in a new "this"
+
+			    loadJSONMB(function(response) {
+			    	var mbJSON = JSON.parse(response);
+			    	console.log(mbJSON);
+			    });
+			    
+			  };
+
+			 this.display = function(data) {
+			 	if (data.features.length === 0) {
+      				return;
+    			} 
+
+    			var center = data.features[0].center;
+    			console.log(center);
+
+
+			 }
+
+
+			 // this.getVerticalCoord = function(center) {
+			    
+			    
+			    
+			 //    // print(verticalOffset);
+			 //    return verticalOffset;
+			 //  }
+
+		}
+
+
+	
+
+		function init() {
+			loadJSON(function(response) {
+				var nytArticlesJSON = JSON.parse(response);
+				gotData(nytArticlesJSON);
+			});
+
+		}
+
+	</script>
+</head>
+
+<body>
+	<div id="map"></div>
+	
+	<script>
+
+	// replace "toner" here with "terrain" or "watercolor"
+	var layer = new L.StamenTileLayer("toner");
+	var map = new L.Map("map", {
+	    center: new L.LatLng(-25.9, 32.6),
+	    zoom: 11
+	});
+	map.addLayer(layer);
+	
+	</script>
+	Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.
+</body>
+</html>

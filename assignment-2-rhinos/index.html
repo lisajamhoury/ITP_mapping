@@ -1,0 +1,115 @@
+<!-- Leaflet documentation for geoJSON: http://leafletjs.com/examples/geojson.html -->
+
+<!DOCTYPE html>
+<head>
+  <style>
+    body {
+      padding:0;
+      margin:0;
+      height: 100%;
+    }
+
+    #map{
+      position: absolute;
+      top: 76px;
+      bottom: 0;
+      width: 100%;
+      z-index: 1;
+    } 
+
+    #nav {
+    	position: absolute; 
+    	top: 0;
+    	width: 100%;
+    	height:	76px;
+    	background-color: green;
+    	z-index: 1000;
+    }
+
+    h1 {
+    	font-size: 1.3em;
+    	padding: 10px 0 0 50px;
+    	font-family: 'helvetica neue';
+    	font-weight: 200;
+    }
+
+    img {
+    	position: absolute;
+    	top: 10px;
+    	right: 50px;
+    }
+
+    .leaflet-popup-content {
+    	width: 200px;
+    }
+
+  </style>
+
+  <title> Map with Leaflet Markers and Pop-ups</title>
+  <link rel="stylesheet" href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css">
+  <script src ="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>  
+  <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+
+  <!-- Jquery so that we can pull in external JSON files  -->
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="js/Leaflet.MakiMarkers.js"></script> 
+</head>
+<body>
+  
+  <div id="nav">
+  	<h1>Global Northern White Rhinocerous Population, Male (2016)</h1> 
+  	<img src="assets/key.png">
+  </div>
+  
+  <div id="map"></div>
+
+  <script>
+  
+  	//stamen map
+  	var layer = new L.StamenTileLayer("toner");
+	var map = new L.Map("map", {
+	    center: new L.LatLng(0.0980224, 36.2601172),
+	    zoom: 2
+	});
+	map.addLayer(layer);
+
+	// CartoDB Map	
+  // var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+  //   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+  // });
+  // var map = L.map('map').setView([0.0980224, 36.2601172], 2);
+  // map.addLayer(layer);
+
+  var boxIcon = L.MakiMarkers.icon({icon: "star", color: "#99C3AF", size: "s"});
+
+  var marker = L.marker([0.0980224, 36.2601172], {icon:boxIcon}).addTo(map);  
+   // Adding Pop-up syntax
+  // marker.bindPopup("<em>Hello there</em>");
+
+
+
+  		//pop-up on hover
+	marker.on('mouseover', function(e) {
+	  var popup = L.popup()
+	    .setLatLng(e.latlng) //(e.latlng returns the coordinates of the event)
+	    .setContent("Location: Ol Pejeta Conservancy; Name: Sudan; Age: 42;")
+	    .openOn(map);
+	});
+
+  // STYLING
+  geojsonStyle = {
+    "color": "#99C3AF"
+  }
+
+  var kenya = $.getJSON("kenya.json", function(data){
+    L.geoJson(data, {
+      style: geojsonStyle
+    }).addTo(map);
+  });
+
+
+  </script>
+</body>
+</html>
+
+
