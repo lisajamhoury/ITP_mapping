@@ -14586,7 +14586,7 @@ var cpData = {
             "properties": {
                 "unreliable": "-", 
                 "name": "Democratic Republic of the Congo", 
-                "status": "-2", 
+                "status": "1", 
                 "executions": " "
             }
         }, 
@@ -14799,7 +14799,7 @@ var cpData = {
             "properties": {
                 "unreliable": "-", 
                 "name": "Republic of the Congo", 
-                "status": "1", 
+                "status": "-1", 
                 "executions": " "
             }
         }, 
